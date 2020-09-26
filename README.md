@@ -42,3 +42,8 @@ I highly recommend the https://perl.plover.com/yak/cftalk/ by Mark Jason Dominus
 made in 2005. His work and especially of Bill Gosper, the original inventor, are 
 hereby happily acknowledged. 
 Sept 25, 2020   Reiner Wilhelms-Tricarico.
+p.s. This project also contains a class for rational numbers rationalQ, using integer arithmetic
+for all usual operations. Furthermore there is a not yet fully developed class for 
+Quaternions, which also operate in integer arithmetic, that is, objects of the class 
+rationalQ<long> This is still under development.
+           
