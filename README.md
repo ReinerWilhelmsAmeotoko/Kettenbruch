@@ -13,10 +13,9 @@ will understand in a year from now my own code.
 In short Gosper's method relies on statemachines. For example, assume as in my 
 programmed example, that I have already the CF for sqrt(2) and for sqrt(7).
 Calling sqrt(2) X, and sqrt(7) Y, I want to compute the following function:
-           27+7x+15y-xy
- z(x,y) = --------------    where x = sqrt(2) and y = sqrt(7)  is in biggest below.
-           15+3x+10y+2xy
-and directly generate the CF for Z(X,Y), of course, all in integer arithmetic.
+z(x,y) =  (27+7x+15y-xy)/(15+3x+10y+2xy)    
+where x = sqrt(2) and y = sqrt(7). 
+And thereby directly generate the CF for Z(X,Y), of course, all in integer arithmetic.
 Gosper's method have then one statemachine Z that can generate the CF of Z(x,y),
 while requesting state updates from X and Y. For this simple case, where the
 input CF's are hardcoded, e.g., sqrt(2) = [1; 2 2 2 2 2 2 ... ad infinity],
