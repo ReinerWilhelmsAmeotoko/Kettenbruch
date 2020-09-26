@@ -24,8 +24,7 @@ and emitting the next coefficient, that is, the sequence of 1, 2, 2, ...
 for X and [2, 1 1 1 4 1 1 1 4 ...] for Y, which represents sqrt(7). Z creates its output
 CF coeffients by operating on a small coefficient matrix, which is initially
 the coefficients in that above formula: 
-[a b c d]  as [27, 7, 15, -1]
-[e f g h]     [15, 3, 10,  2]
+[[a b c d];[e f g h]] as [[27, 7, 15, -1];[15, 3, 10,  2]]
 The updates of this table with new inputs form X and Y follow from 
 the algebra used in substiting x --> p+1/x applied to above formula,
 and similar for y -- > q + 1/x.  Z updates it's state by reformulating
