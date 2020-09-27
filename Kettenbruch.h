@@ -41,7 +41,7 @@ namespace CF {
         plus, minus, times, divide
     };
     enum emitted {
-        fromX, fromY, fromZ, none
+        fromX, fromY, fromZ, fromXandY, none
     };
 
 /// Kettenbruch<typename>
@@ -142,9 +142,13 @@ namespace CF {
             }
         }
 
-        /// This is to call to update Z (this object) either from emitted signal from X or Y or tell this, object (Z)
-        /// to update its state; this is called CF::fromZ. In all cases the 2x4 table is updated
-        Ts receiveUpdate(CF::emitted opcode, Ts p);
+        /// This is to call to update Z (this object) either from emitted signal from X or Y or tell Z to update
+        /// its state. The operations correspond to the algebra in (1) fromX:  X-> p+1/X, fromY: Y->p+1/Y
+        /// fromXandY:   X->p+1/X and Y->q+1/Y.  Finally fromZ: Z updates to Z -> 1/(Z-p).
+        /// this function can be called with 2 or three arguments. The third is only needed
+        /// for the operation fromXandY.
+        /// In all cases the 2x4 table is updated. See code for details
+        Ts receiveUpdate(CF::emitted opcode, Ts p, Ts q = 0l);
 
         /// calls Z to check if it can emit. If it can update, it returns the emission value
         /// in the argument. But this doesn't update, that's why it's const
@@ -203,18 +207,22 @@ namespace CF {
     };
 
     template<typename Ts>
-    Ts CFMaker<Ts>::receiveUpdate(CF::emitted opcode, Ts p) {
+    Ts CFMaker<Ts>::receiveUpdate(CF::emitted opcode, Ts p, Ts q) {
         Ts a = mat2x4[0][0], b = mat2x4[0][1], c = mat2x4[0][2], d = mat2x4[0][3];
         Ts e = mat2x4[1][0], f = mat2x4[1][1], g = mat2x4[1][2], h = mat2x4[1][3];
         switch (opcode) {
-            case fromX:
+            case fromX:   // x-> p+1/x changes the coefficient matrix to:
                 mat2x4 = {b, a + b * p, d, c + d * p, f, e + f * p, h, g + h * p};
                 break;
-            case fromY:
+            case fromY:   // y-> p+1/y changes the coefficient matrix to:
                 mat2x4 = {c, d, a + c * p, b + d * p, g, h, e + g * p, f + h * p};
                 break;
-            case fromZ:
+            case fromZ:   //  z -> 1/(z-p)
                 mat2x4 = {e, f, g, h, a - e * p, b - f * p, c - g * p, d - h * p};
+                break;
+            case fromXandY:  // x-> p+1/x and y-> q+1/y (requires the 3rd argument)
+                mat2x4 = {d, c + d * p, b + d * q, a + b * p + c * q + d * p * q,
+                          h, g + h * p, f + h * q, e + f * p + g * q + h * p * q};
                 break;
         }
         Ts alle = greatestCommonDivisor();
@@ -437,19 +445,19 @@ namespace CF {
         Ts a = mat2x4[0][0], b = mat2x4[0][1], c = mat2x4[0][2], d = mat2x4[0][3];
         Ts e = mat2x4[1][0], f = mat2x4[1][1], g = mat2x4[1][2], h = mat2x4[1][3];
         bool previous = false;
-        int countNum=0, countDen=0;
-        for (unsigned int k=0;k<4;k++) {
+        int countNum = 0, countDen = 0;
+        for (unsigned int k = 0; k < 4; k++) {
             if (mat2x4[0][k] != 0l) countNum += 1;
             if (mat2x4[1][k] != 0l) countDen += 1;
         }
         std::string formula = "Z(X,Y)= ";
-        if (countNum>1) formula += "(";
+        if (countNum > 1) formula += "(";
         if (a != 0l) {
             formula += std::to_string(a);
             previous = true;
         }
         if (b != 0l) {
-            if (b > 0l  && previous) formula += "+" + std::to_string(b);
+            if (b > 0l && previous) formula += "+" + std::to_string(b);
             else formula += std::to_string(b);
             formula += "X";
             previous = true;
@@ -466,10 +474,10 @@ namespace CF {
             formula += "XY";
             previous = true;
         }
-        if (countNum>1) formula += ")";
+        if (countNum > 1) formula += ")";
         formula += "/";
         previous = false;
-        if (countDen>1) formula += "(";
+        if (countDen > 1) formula += "(";
         if (e != 0l) {
             formula += std::to_string(e);
             previous = true;
@@ -484,14 +492,14 @@ namespace CF {
             if (g > 0l && previous) formula += "+" + std::to_string(g);
             else formula += std::to_string(g);
             formula += "Y";
-             previous = true;
+            previous = true;
         }
         if (h != 0l && previous) {
             if (h > 0l && previous) formula += "+" + std::to_string(h);
             else formula += std::to_string(h);
             formula += "XY";
         }
-        if (countDen>1) formula += ")";
+        if (countDen > 1) formula += ")";
         formula += " ";
         return formula;
     }
