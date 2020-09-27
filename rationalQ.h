@@ -30,6 +30,12 @@ public:
         reduce();
     }
 
+    rationalQ<Ts>(const rationalQ<Ts> &B) {
+        num = B.num;
+        den = B.den;
+        reduce();
+    }
+
     void simplify() {
         reduce();
     }
@@ -73,41 +79,66 @@ public:
 
     rationalQ<Ts> abs() const;
 
-    bool operator==(const rationalQ &B) const {
+    bool operator==(const rationalQ<Ts> &B) const {
         return (num == B.num && den == B.den);
     }
 
-    bool operator<(const rationalQ &B) const {
-        Ts lc = LCM(den, B.den);
-        Ts a = (lc / den) * num;
-        Ts b = (lc / B.den) * B.num;
-        //std::cout << " operator lc, a < b " << lc << " " << a <<" " << b << std::endl;
-        return a < b;
+    bool operator!=(const rationalQ<Ts> &B) const {
+        return (num != B.num || den != B.den);
     }
 
-    bool operator<=(const rationalQ &B) const {
-        Ts lc = LCM(den, B.den);
-        Ts a = (lc / den) * num;
-        Ts b = (lc / B.den) * B.num;
-        //std::cout << " operator lc, a < b " << lc << " " << a <<" " << b << std::endl;
-        return a <= b;
+    bool operator<(const rationalQ<Ts> &B) const {
+        Ts a = num;
+        Ts b = den;
+        Ts c = B.num;
+        Ts d = B.den;
+        Ts g = GCD(b, d);
+        if (g > 1l) {
+            b /= g;
+            d /= g;
+        }
+        return (a * d) < (c * b);
     }
 
-    bool operator>(const rationalQ &B) const {
-        Ts lc = LCM(den, B.den);
-        Ts a = (lc / den) * num;
-        Ts b = (lc / B.den) * B.num;
-        //std::cout << " operator lc, a < b " << lc << " " << a <<" " << b << std::endl;
-        return a > b;
+    bool operator<=(const rationalQ<Ts> &B) const {
+        Ts a = num;
+        Ts b = den;
+        Ts c = B.num;
+        Ts d = B.den;
+        Ts g = GCD(b, d);
+        if (g > 1l) {
+            b /= g;
+            d /= g;
+        }
+        return (a * d) <= (c * b);
     }
 
-    bool operator>=(const rationalQ &B) const {
+    bool operator>(const rationalQ<Ts> &B) const {
+        Ts a = num;
+        Ts b = den;
+        Ts c = B.num;
+        Ts d = B.den;
+        Ts g = GCD(b, d);
+        if (g > 1l) {
+            b /= g;
+            d /= g;
+        }
+        Ts ad = a * d;    // this can overflow
+        Ts bc = b * c;    // this too. and then the rest isn't working
+        return (ad > bc);
+    }
 
-        Ts lc = LCM(den, B.den);
-        Ts a = (lc / den) * num;
-        Ts b = (lc / B.den) * B.num;
-        //std::cout << " operator lc, a < b " << lc << " " << a <<" " << b << std::endl;
-        return a >= b;
+    bool operator>=(const rationalQ<Ts> &B) const {
+        Ts a = num;
+        Ts b = den;
+        Ts c = B.num;
+        Ts d = B.den;
+        Ts g = GCD(b, d);
+        if (g > 1l) {
+            b /= g;
+            d /= g;
+        }
+        return (a * d) >= (b * c);
     }
 
 
@@ -131,20 +162,20 @@ friend rationalQ<Ts> operator/(const rationalQ<Ts> &x, const rationalQ<Ts> &y);
 
 template<typename Ts>
 void rationalQ<Ts>::reduce() {
-    if (den == 1) return;
-    if (num == 0) {
-        den = 1;
+    if (den == 1l) return;
+    if (num == 0l) {
+        den = 1l;
         return;
     }
     if (num == den) {
-        num = 1;
-        den = 1;
+        num = 1l;
+        den = 1l;
         return;
     }
     Ts g = GCD(num, den);
     num /= g;
     den /= g;
-    if (den < 0) {
+    if (den < 0l) {
         num = -num;
         den = -den;
     }
@@ -153,44 +184,97 @@ void rationalQ<Ts>::reduce() {
 template<typename Ts>
 std::ostream &operator<<(std::ostream &os, const rationalQ<Ts> &R) {
     os << R.num;
-    if (R.den != 1) os << '/' << R.den;
+    if (R.den != 1l) os << '/' << R.den;
     return os;
 }
 
 template<typename Ts>
 rationalQ<Ts> &rationalQ<Ts>::operator+=(const rationalQ<Ts> &y) {
-    Ts ll = LCM(den, y.den);
-    Ts na = (ll / den) * num;
-    Ts nb = (ll / y.den) * y.num;
-    num = na + nb;
-    den = ll;
+    Ts a = num;
+    Ts b = den;
+    Ts c = y.num, d = y.den;
+    Ts g = GCD(b, d);
+    if (g > 1l) {
+        b /= g;
+        d /= g;
+    }
+    num = a * d + c * b;
+    den = b * d * g;
+    g = GCD(num, den);
+    if (g > 1l) {
+        num /= g;
+        den /= g;
+    }
     reduce();
     return *this;
 }
 
 template<typename Ts>
 rationalQ<Ts> &rationalQ<Ts>::operator-=(const rationalQ<Ts> &y) {
-    Ts ll = rationalQ<Ts>::LCM(den, y.den);
-    Ts na = (ll / den) * num;
-    Ts nb = (ll / y.den) * y.num;
-    num = na - nb;
-    den = ll;
+    Ts a = num;
+    Ts b = den;
+    Ts c = y.num, d = y.den;
+    Ts g = GCD(b, d);
+    if (g > 1l) {
+        b /= g;
+        d /= g;
+    }
+    num = a * d - c * b; // only difference from +
+    den = b * d * g;
+    g = GCD(num, den);
+    if (g > 1l) {
+        num /= g;
+        den /= g;
+    }
     reduce();
     return *this;
 }
 
 template<typename Ts>
 rationalQ<Ts> &rationalQ<Ts>::operator*=(const rationalQ<Ts> &B) {
-    num *= B.num;
-    den *= B.den;
+    // reduce size by eliminating possible GCD'S
+    // before carrying out the multiplication.
+    Ts a = num;
+    Ts b = den;
+    Ts c = B.num, d = B.den;
+    Ts g;
+    g = GCD(a, d);
+    if (g > 1l) {
+        a /= g;
+        d /= g;
+    }
+    g = GCD(b, c);
+    if (g > 1l) {
+        b /= g;
+        c /= g;
+    }
+    num = a * c;
+    den = b * d;
+//    num *= B.num;
+//    den *= B.den;
     reduce();
     return *this;
 }
 
 template<typename Ts>
 rationalQ<Ts> &rationalQ<Ts>::operator/=(const rationalQ<Ts> &B) {
-    num *= B.den;
-    den *= B.num;
+    Ts a = num;
+    Ts b = den;
+    Ts c = B.num, d = B.den;
+    // we want: a*d / b*c ;
+    Ts g;
+    g = GCD(a, c);
+    if (g > 1l) {
+        a /= g;
+        c /= g;
+    }
+    g = GCD(d, b);
+    if (g >= 1l) {
+        d /= g;
+        b /= g;
+    }
+    num = a * d;
+    den = b * c;
     reduce();
     return *this;
 }
@@ -214,7 +298,7 @@ template<typename Ts>
 rationalQ<Ts> operator*(const rationalQ<Ts> &x, Ts b) {
     rationalQ<Ts> bb(b);
     rationalQ<Ts> result(x.num, x.den);
-    result += bb;
+    result *= bb;
     return result;
 }
 
@@ -229,17 +313,15 @@ rationalQ<Ts> operator*(Ts b, const rationalQ<Ts> &x) {
 
 template<typename Ts>
 rationalQ<Ts> operator+(Ts b, const rationalQ<Ts> &x) {
-    rationalQ<Ts> bb(b);
-    rationalQ<Ts> result(x.num, x.den);
-    result += bb;
+    rationalQ<Ts> result(b);
+    result += x;
     return result;
 }
 
 template<typename Ts>
 rationalQ<Ts> operator-(Ts b, const rationalQ<Ts> &x) {
-    rationalQ<Ts> bb(b);
-    rationalQ<Ts> result(x.num, x.den);
-    result -= bb;
+    rationalQ<Ts> result(b);
+    result -= x;
     return result;
 }
 
@@ -253,13 +335,25 @@ rationalQ<Ts> operator/(const rationalQ<Ts> &x, Ts b) {
 
 
 template<typename Ts>
+rationalQ<Ts> operator/(Ts b, const rationalQ<Ts> &x) {
+    rationalQ<Ts> result(b);
+    result /= x;
+    return result;
+}
+
+
+template<typename Ts>
 rationalQ<Ts> operator*(const rationalQ<Ts> &x, const rationalQ<Ts> &y) {
-    return rationalQ<Ts>(x.num * y.num, x.den * y.den);
+    rationalQ<Ts> result(x);
+    result *= y;
+    return result;
 }
 
 template<typename Ts>
 rationalQ<Ts> operator/(const rationalQ<Ts> &x, const rationalQ<Ts> &y) {
-    return rationalQ<Ts>(x.num * y.den, x.den * y.num);
+    rationalQ<Ts> result(x);
+    result /= y;
+    return result;
 }
 
 template<typename Ts>
