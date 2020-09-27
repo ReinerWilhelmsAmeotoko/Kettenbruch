@@ -56,6 +56,7 @@ namespace CF {
         unsigned int xmax = X.numberCoefficients();
         unsigned int ymax = Y.numberCoefficients();
         unsigned int countX = 0, countY = 0, countZ = 0;
+        unsigned int countZEmit = 0;
         unsigned int countScaling = 0;
         unsigned int countReducing = 0;
         unsigned int countMultiples = 0;
@@ -68,14 +69,25 @@ namespace CF {
         std::string laterformula = Z.makeFormulaFromMatrix();
         std::cout << " Start Formula: " << laterformula << std::endl;
         for (unsigned int nc = 0; nc < 10; ++nc) {
-            Z.receiveUpdate(CF::fromX, X.nextState());
+            Z.receiveUpdate(fromXandY, X.nextState(),Y.nextState() );
             countX += 1;
-            Z.receiveUpdate(CF::fromY, Y.nextState());
             countY += 1;
+            Z.printMyTable();
+            if (Z.tryReducing()) {
+                std::cout << "Reducing in initial loop " << countX << " " << countY << " " << countZ << std::endl;
+                Z.printMyTable();
+                countReducing += 1;
+            }
             if (nc<5) {
                 laterformula = Z.makeFormulaFromMatrix();
                 std::cout << " Step " << nc + 1 << " " << laterformula << " 2x4 matrix: " << std::endl;
-                Z.printMyTable();
+                //Z.printMyTable();
+            }
+            if (Z.checkIfZcanEmit(newCoefficient)) {
+                Z.receiveUpdate(fromZ, newCoefficient);
+                countZEmit += 1;
+                ZZ.appendCoeff(newCoefficient);
+                countZ += 1;
             }
         }
 
@@ -100,7 +112,7 @@ namespace CF {
                 std::cout << " Limit of the coefficients of X or Y reached.\n";
                 break;
             }
-            unsigned int countZEmit = 0;
+
             for (int kk = 0; kk < 4; ++kk) {
                 if (Z.checkIfZcanEmit(newCoefficient)) {
                     Z.receiveUpdate(fromZ, newCoefficient);
@@ -125,8 +137,7 @@ namespace CF {
             auto tag = Z.checkWhoShouldRun();    // returns an enum tag in CF::emitted.
             switch (tag) {
                 case none:     // Z can't decide so we call them both
-                    Z.receiveUpdate(fromX, X.nextState());
-                    Z.receiveUpdate(fromY, Y.nextState());
+                    Z.receiveUpdate(fromXandY, X.nextState(),Y.nextState());
                     countX += 1;
                     countY += 1;
                     break;
