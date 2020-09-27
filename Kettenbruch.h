@@ -5,7 +5,6 @@
 //#ifndef RATIONALS_KETTENBRUCH_H
 //#define RATIONALS_KETTENBRUCH_H
 
-
 /// Template classes for generating continued fractions from two others.
 /// (usually long int is used, and thus far it was only tested for long int)
 /// This is built on the original ideas by Bill Gosper, and I also used
