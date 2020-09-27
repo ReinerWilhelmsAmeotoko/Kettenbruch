@@ -27,13 +27,24 @@ the coefficients in that above formula:
 [[a b c d];[e f g h]] as [[27, 7, 15, -1];[15, 3, 10,  2]]
 The updates of this table with new inputs form X and Y follow from 
 the algebra used in substiting x --> p+1/x applied to above formula,
-and similar for y -- > q + 1/x.  Z updates it's state by reformulating
-the by z --> 1/(z - r), where r is an integer number representing he
-next coefficient in the output CF. The functions of Z is implemented in the 
-C++ template class called CFMaker<typename Ts>, whereas X and Y are 
-represented by a very rudimentary template class called Kettenbruch<typename Ts>,
-which is basically a list or vector of integer numbers. I have tested this
-only with long int. 
+and similar for y -- > q + 1/x.  Z updates it's state by replacing it self
+as z --> 1/(z - r), where r is an integer number representing the
+next coefficient in the output CF. Z has to find the coefficent r by 
+checking if current coefficient matrix can be reduced by pulling 
+out an integer r, just like one would find r = 1, to rewrite the fraction
+23/13 as 1+10/12. Except that in this case the fraction is a low rank rational
+function. The value r only depends on the coefficients in the numberator and
+denominator polynomials. 
+The functions of Z is implemented in the C++ template class called 
+CFMaker<typename Ts>, whereas X and Y are represented by a very rudimentary 
+template class called Kettenbruch<typename Ts>, which currently is just 
+a list or vector of integer numbers. The intention is to also replace 
+X and Y by actual generators that spit out the next CF coeffient, that is,
+X and Y the can do all the things Z can, but also have a mechanism for
+storing and retreiving the CF coefficients. 
+
+I have tested these template classes so far only with a type of long int, that is
+64 bit integers (may be 128 on other systems).
 
 I might later write a better description with more details in LaTeX, until then
 I highly recommend the https://perl.plover.com/yak/cftalk/ by Mark Jason Dominus
