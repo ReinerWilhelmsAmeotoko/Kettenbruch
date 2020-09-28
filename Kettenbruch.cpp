@@ -33,21 +33,9 @@ namespace CF {
         CF::CFMaker<long> Z(biggest);
         std::string formula = Z.makeFormulaFromMatrix();
 
-        // hard coded CF's of some square roots, used as input. \todo replace by root finding CF
-        // The length of these limits the number of recursion steps.
-        // X = Sqrt(2): (specifying std::vector<long> is not necessary as seen for Y below)
-        CF::Kettenbruch<long> X(std::vector<long>(
-                {1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                 2, 2}));
-        // Y = Sqrt(7):
-        CF::Kettenbruch<long> Y(
-                {2, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1,
-                 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1,
-                 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1, 1, 1, 4, 1,
-                 1, 1});
-
+        // hard coded
+        CF::SqrtMaker<long> X(2l, 1l);   // sends CF coefficients of sqrt(2) on demand
+        CF::SqrtMaker<long> Y(7l, 1l);   // sends CF coefficients of sqrt(7) on demand
         std::vector<long> justfortype;          // Empty vector - Trick to create an empty Kettenbruch object
         Kettenbruch<long int> ZZ(justfortype);  // newly generated CF coefficients are stored in this object.
         X.start();   // bring in initial state.
@@ -69,16 +57,18 @@ namespace CF {
         std::string laterformula = Z.makeFormulaFromMatrix();
         std::cout << " Start Formula: " << laterformula << std::endl;
         for (unsigned int nc = 0; nc < 10; ++nc) {
-            Z.receiveUpdate(fromXandY, X.nextState(),Y.nextState() );
+            Z.receiveUpdate(fromXandY, X.makeNextState(), Y.makeNextState());
             countX += 1;
             countY += 1;
+            X.countUp(); // can't be called from makeNextState(). Dunno why
+            Y.countUp();
             Z.printMyTable();
             if (Z.tryReducing()) {
                 std::cout << "Reducing in initial loop " << countX << " " << countY << " " << countZ << std::endl;
                 Z.printMyTable();
                 countReducing += 1;
             }
-            if (nc<5) {
+            if (nc < 5) {
                 laterformula = Z.makeFormulaFromMatrix();
                 std::cout << " Step " << nc + 1 << " " << laterformula << " 2x4 matrix: " << std::endl;
                 //Z.printMyTable();
@@ -137,19 +127,23 @@ namespace CF {
             auto tag = Z.checkWhoShouldRun();    // returns an enum tag in CF::emitted.
             switch (tag) {
                 case none:     // Z can't decide so we call them both
-                    Z.receiveUpdate(fromXandY, X.nextState(),Y.nextState());
+                    Z.receiveUpdate(fromXandY, X.makeNextState(), Y.makeNextState());
                     countX += 1;
                     countY += 1;
+                    X.countUp();
+                    Y.countUp();
                     break;
                 case fromX:
                     //std::cout << " calling X \n";
-                    Z.receiveUpdate(fromX, X.nextState());
+                    Z.receiveUpdate(fromX, X.makeNextState());
                     countX += 1;
+                    X.countUp();
                     break;
                 case fromY:
                     //std::cout << " calling Y \n";
-                    Z.receiveUpdate(fromY, Y.nextState());
+                    Z.receiveUpdate(fromY, Y.makeNextState());
                     countY += 1;
+                    Y.countUp();
                     break;
             }
             if (kstate > 50) {
@@ -176,8 +170,49 @@ namespace CF {
         std::cout << " 1st time scaling round " << firstScaling << " after " << firstScalingZcount << " Z calls "
                   << std::endl;
         std::cout << " Reducing was possible " << countReducing << " times" << std::endl;
-        std::cout << " For the function " << formula ;
+        std::cout << " For the function " << formula;
         std::cout << ", Z emitted " << countZ << " CF coefficients stored in ZZ. \n";
         std::cout << "CF in ZZ: " << ZZ << std::endl;
+    }
+
+}
+namespace CF {
+    void computeCFofSquareRoot(const long A, const long B) {
+        CF::SqrtMaker<long> mysqrt(A, B);
+
+        std::cout << " Computing the CF of the sqrt(" << A <<"/" << B << ")" << std::endl;
+        mysqrt.printCurrentCoefficients();
+
+        // First compute 8 coefficients that aren't stored in the object.
+        // this is the usual use: with every makeNextState the next
+        // coefficient is computed and not stored.
+
+
+        // now produce 20 more that are stored in the object.
+        // Usually one would call this first just to have a fixed
+        // These coefficients then are available by means of
+        // nextState, which is a function of the base class
+        // Kettenbruch.
+        // Generate the continuation of the above started CF.
+        mysqrt.start();
+        int appended  = mysqrt.makeTheCF(20);
+        unsigned int num = mysqrt.numberCoefficients();
+        std::cout << " Appended " << appended << " num Coefficients " << num << std::endl;
+        std::cout << " stored CF: " << mysqrt << std::endl;
+        std::cout << " reading out stored CF: ";
+        for (unsigned int k = 0; k < num; ++k) {
+            std::cout << k << ":" << mysqrt.nextState() << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << " Next: Continue to poll more 50 more coefficients which won't be stored \n";
+        for (unsigned int n=0; n<50; ++n) {
+            long qi = mysqrt.makeNextState();
+            std::cout << qi << " ";
+        }
+        std::cout << std::endl;
+        num = mysqrt.numberCoefficients();
+        std::cout << " Unchanged: num stored Coefficients " << num << std::endl;
+        std::cout << " stored CF: " << mysqrt << std::endl;
     }
 }
