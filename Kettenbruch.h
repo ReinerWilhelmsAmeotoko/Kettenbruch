@@ -5,6 +5,7 @@
 //#ifndef RATIONALS_KETTENBRUCH_H
 //#define RATIONALS_KETTENBRUCH_H
 
+
 /// Template classes for generating continued fractions from two others.
 /// (usually long int is used, and thus far it was only tested for long int)
 /// This is built on the original ideas by Bill Gosper, and I also used
@@ -66,7 +67,7 @@ namespace CF {
                 return 0l;
             }
         }
-
+        void countUp() {counting += 1;}
         void start() {
             current = 0;
             counting = 0;
@@ -80,6 +81,7 @@ namespace CF {
 
         void appendCoeff(const Ts bb) {
             coefficients.push_back(bb);
+            lastIndex += 1;
         }
 
     protected:
@@ -88,6 +90,104 @@ namespace CF {
         unsigned int counting;
         std::vector<Ts> coefficients;
     };
+///
+/// \tparam Ts Usually long int
+/// SqrtMaker is a derived class from Kettenbruch.
+/// This class can generate the coefficients of square roots of fractions on demand
+/// or stored in an array of the base class.
+/// It receives in the Generator a fraction A/B. This is used to set up
+/// the machinery for computing CF coefficients. Whenever the coefficient
+/// is desired, call the method makeNextState(), which returns a value
+/// of the \tparam, usually long.
+///
+    template<typename Ts>
+    class SqrtMaker : public Kettenbruch<Ts> {
+    public:
+        /// the generator has two parameters, namely integer value of
+        /// a numerator and denominator of a fixed fraction. For example, Called with
+        /// (7,1) it will generate the Cf of sqrt(7), or (23,13) of 23/13.
+        SqrtMaker(const Ts Num, const Ts Den) : Kettenbruch<Ts>(std::vector<Ts>()) {
+            std::cout << " SqrtMaker generator called \n";
+            init(Num, Den);
+        }
+        /// computes niterations CF coefficients in one go, and they are stored
+        /// in the the next CF coefficient and update the system matrix.
+        /// And then return this to the caller.
+        int makeTheCF(const int niterations);
+
+        /// helper function for diagnosis
+        void printCurrentCoefficients() const {
+            std::cout << "(" << mat2x2[0][0] << " Y + " << mat2x2[0][1] << ")/("
+                      << mat2x2[1][0] << " Y + " << mat2x2[1][1] << ") " << std::endl;
+        }
+
+        /// compute the next CF coefficient and update the system matrix.
+        /// And then return this to the caller.
+        Ts makeNextState();
+
+    protected:
+        void init(const Ts aa, const Ts bb) {
+            A = aa;
+            B = bb;
+            mat2x2 = {0l, A, B, 0l};
+        }
+
+        Ts iteratedRoot();
+
+        Ts A, B;
+        std::array<std::array<Ts, 2>, 2> mat2x2;
+    };
+
+    template<typename Ts>
+    int SqrtMaker<Ts>::makeTheCF(const int niterations) {
+        Ts q = 1l;
+        unsigned int nn = 0;
+        while (nn < niterations) {
+            q = makeNextState();
+            Kettenbruch<Ts>::appendCoeff(q);
+            nn += 1;
+        }
+        return (int) nn;
+    }
+
+    template<typename Ts>
+    Ts SqrtMaker<Ts>::iteratedRoot() {
+        Ts a = mat2x2[0][0], b = mat2x2[0][1];
+        Ts c = mat2x2[1][0], d = mat2x2[1][1];
+        double af = a, bf = b, cf = c;
+        double y = 1.0;
+        Ts retval = 1l;
+        if (c == 0l && a != 0l) {
+            y = -bf / (2 * af);
+            retval = (Ts) y;
+            return retval;
+        } else {
+            y = 2 * af / cf + 1.0;
+            for (unsigned int k = 0; k < 5; ++k) {
+                double den = cf * y - af;
+                if (den < 1.0e-16) {
+                    std::cout << " Underflow in c*y-a \n";
+                    printCurrentCoefficients();
+                    return 1l;
+                }
+                y = ((af * y + bf) / den + y) / 2;
+            }
+            retval = (Ts) y;
+            return retval;
+        }
+    }
+
+
+    template<typename Ts>
+    Ts SqrtMaker<Ts>::makeNextState() {
+        Ts q = iteratedRoot();
+        Ts a = mat2x2[0][0];
+        Ts b = mat2x2[0][1];
+        Ts c = mat2x2[1][0];
+        Ts d = mat2x2[1][1];
+        mat2x2 = {c * q - a, c, b + a * q + a * q - c * q * q, a - c * q};
+        return q;
+    }
 
     template<typename Ts>
     std::ostream &operator<<(std::ostream &os, const Kettenbruch<Ts> &ZZ) {
@@ -161,6 +261,9 @@ namespace CF {
 
         ///  Compares the absolute differences of fractions in the coefficients:
         /// If  |b/f - a/e| > | c/g-a/e| then X should be called next, otherwise Y.
+        /// This comparison is implemented by using double floatingpoint to
+        /// compare two fractions - otherwise this may not work for
+        /// very large numbers.
         CF::emitted checkWhoShouldRun() const;
 
         /// as soon as the matrix coefficients (a,b, .. h) get too big
@@ -278,6 +381,7 @@ namespace CF {
     CF::emitted CFMaker<Ts>::checkWhoShouldRun() const {
         Ts a = mat2x4[0][0], b = mat2x4[0][1], c = mat2x4[0][2], d = mat2x4[0][3];
         Ts e = mat2x4[1][0], f = mat2x4[1][1], g = mat2x4[1][2], h = mat2x4[1][3];
+
         if (e > 0l && f > 0l && g > 0l) {
             rationalQ<Ts> r0(a, e);
             rationalQ<Ts> rx(b, f);
@@ -503,8 +607,10 @@ namespace CF {
         return formula;
     }
 
-    //// other tokens
+//// other tokens
 
     void processingContFrac();
+
+    void computeCFofSquareRoot(const long A, const long B);
 
 }  //end namespace CF
