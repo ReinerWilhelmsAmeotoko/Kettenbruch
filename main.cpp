@@ -59,10 +59,12 @@ bool checkBoss() {
 int main() {
 
     CF::processingContFrac();
+    std::cout << "\nNext test: Compute the square root of a fraction as CF \n";
+    CF::computeCFofSquareRoot(99l,13l);
 }
 
 /*
-
+Pythagorean quadruples:
 (    1    ,   2    ,    2    ,    3    )
 (    2    ,    10    ,    11    ,    15    )
 (    4    ,    13    ,    16    ,    21    )
