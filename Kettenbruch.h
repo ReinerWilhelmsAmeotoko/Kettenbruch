@@ -163,9 +163,11 @@ namespace CF {
             return retval;
         } else {
             y = 2 * af / cf + 1.0;
-            for (unsigned int k = 0; k < 5; ++k) {
+            // iterating 5 times gives good precision
+            // but 10 times gives better precision ~ 1.e-30
+            for (unsigned int k = 0; k < 10; ++k) {    
                 double den = cf * y - af;
-                if (den < 1.0e-16) {
+                if (den < 1.0e-30) {
                     std::cout << " Underflow in c*y-a \n";
                     printCurrentCoefficients();
                     return 1l;
