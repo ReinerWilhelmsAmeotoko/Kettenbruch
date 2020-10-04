@@ -19,7 +19,7 @@ Ts rationalQ<Ts>::LCM(Ts aa, Ts bb) const  {
     Ts g = GCD(a, b);
    // std::cout << " GCD of " << aa << " and " << bb << " is " << g << std::endl;
     Ts lc;
-    if (g == 1) {
+    if (g == 1l) {
         lc = a * b;
     } else {
         Ts am = a / g;
@@ -36,6 +36,7 @@ Ts rationalQ<Ts>::GCD(Ts aa, Ts bb) const {
     Ts a = labs(aa);
     Ts b = labs(bb);
     Ts t;
+    if (a == 0l || b == 0l) return std::max(a, b);
     if (a < b) {
         t = a;
         a = b;   // store the larger one
