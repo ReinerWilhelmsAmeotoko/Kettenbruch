@@ -6,6 +6,7 @@
 #include "QuaternionQ.h"
 #include <math.h>
 #include "Kettenbruch.h"
+#include "SqrtCF.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 rationalQ<long int> squareRootComplicated(rationalQ<long int> S, rationalQ<long int> start, int maximalIterations,
@@ -51,27 +52,12 @@ bool checkBoss() {
     std::array<std::array<long, 4>, 2> should {5l, 10l,  6l, 12l, -4l, -7l, -6l, -11l};
     std::array<std::array<long, 4>, 2> const &is = Boss.lookupTable();
     return (should == is) ;
-    // 6   13    6   13
-    // 5   10    6   12
-    // 5   10    6   12
-    //-4   -7   -6  -11
 }
 int main() {
-
     CF::processingContFrac();
-    std::cout << "\nNext test: Compute the square root of a fraction as CF \n";
-    CF::computeCFofSquareRoot(99l,13l);
+    std::cout << "\nNext test: Compute the square root of a fraction \n";
+    CF::computeCFofSquareRoot(7l,5l);
+    std::cout << "\nNext test: Compute the 4th root of a fraction " << std::endl;
+    std::cout << " This is done by using the CF delivered by the SqrtCF<long>" << std::endl;
+    CF::computeCFof4thRoot(23l, 13l);
 }
-
-/*
-Pythagorean quadruples:
-(    1    ,   2    ,    2    ,    3    )
-(    2    ,    10    ,    11    ,    15    )
-(    4    ,    13    ,    16    ,    21    )
-(    2    ,    10    ,    25    ,    27    )
-(    12    ,    15    ,    16    ,    25    )
-(    12    ,    16    ,    21    ,    29    )
-(    2    ,    5    ,    14    ,    15    )
-(    4    ,    8    ,    19    ,    21    )
-(    2    ,    7    ,    26    ,    27    )
-*/
