@@ -3,6 +3,7 @@
 //
 
 #include "Kettenbruch.h"
+#include "SqrtCF.h"
 /// An implementation of Bill Gosper's method to extract continued fractions coefficients from
 /// a function z(x,y), where x and y are given in CF coefficients.
 /// I made good use of the very good explanations by Mark Jason Dominus on the site
@@ -34,8 +35,8 @@ namespace CF {
         std::string formula = Z.makeFormulaFromMatrix();
 
         // hard coded
-        CF::SqrtMaker<long> X(2l, 1l);   // sends CF coefficients of sqrt(2) on demand
-        CF::SqrtMaker<long> Y(7l, 1l);   // sends CF coefficients of sqrt(7) on demand
+        CF::SqrtCF<long> X(2l, 1l);   // sends CF coefficients of sqrt(2) on demand
+        CF::SqrtCF<long> Y(7l, 1l);   // sends CF coefficients of sqrt(7) on demand
         std::vector<long> justfortype;          // Empty vector - Trick to create an empty Kettenbruch object
         Kettenbruch<long int> ZZ(justfortype);  // newly generated CF coefficients are stored in this object.
         X.start();   // bring in initial state.
@@ -175,44 +176,4 @@ namespace CF {
         std::cout << "CF in ZZ: " << ZZ << std::endl;
     }
 
-}
-namespace CF {
-    void computeCFofSquareRoot(const long A, const long B) {
-        CF::SqrtMaker<long> mysqrt(A, B);
-
-        std::cout << " Computing the CF of the sqrt(" << A <<"/" << B << ")" << std::endl;
-        mysqrt.printCurrentCoefficients();
-
-        // First compute 8 coefficients that aren't stored in the object.
-        // this is the usual use: with every makeNextState the next
-        // coefficient is computed and not stored.
-
-
-        // now produce 20 more that are stored in the object.
-        // Usually one would call this first just to have a fixed
-        // These coefficients then are available by means of
-        // nextState, which is a function of the base class
-        // Kettenbruch.
-        // Generate the continuation of the above started CF.
-        mysqrt.start();
-        int appended  = mysqrt.makeTheCF(20);
-        unsigned int num = mysqrt.numberCoefficients();
-        std::cout << " Appended " << appended << " num Coefficients " << num << std::endl;
-        std::cout << " stored CF: " << mysqrt << std::endl;
-        std::cout << " reading out stored CF: ";
-        for (unsigned int k = 0; k < num; ++k) {
-            std::cout << k << ":" << mysqrt.nextState() << " ";
-        }
-        std::cout << std::endl;
-
-        std::cout << " Next: Continue to poll more 50 more coefficients which won't be stored \n";
-        for (unsigned int n=0; n<50; ++n) {
-            long qi = mysqrt.makeNextState();
-            std::cout << qi << " ";
-        }
-        std::cout << std::endl;
-        num = mysqrt.numberCoefficients();
-        std::cout << " Unchanged: num stored Coefficients " << num << std::endl;
-        std::cout << " stored CF: " << mysqrt << std::endl;
-    }
 }
